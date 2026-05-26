@@ -60,6 +60,18 @@ Opción D
 Regla: Marca la opción correcta agregando (The correct answer) al final de la línea.
 ¡Luego haz clic en "Interpretar y Cargar Preguntas" abajo para ver el preview e iniciar!`;
 
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const text = ev.target?.result as string;
+      setRawText(text);
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  };
+
   const handleSubmitVisual = (e: React.FormEvent) => {
     e.preventDefault();
     onAddVisualQuestion(visualCreator);
@@ -111,12 +123,18 @@ Regla: Marca la opción correcta agregando (The correct answer) al final de la l
                   <h3 className="font-semibold text-white text-base">Escribe o pega tus preguntas</h3>
                   <p className="text-xs text-slate-400">El editor se encuentra limpio para que agregues tu propio contenido.</p>
                 </div>
-                <button
-                  onClick={onClearEditor}
-                  className="text-xs bg-rose-950/40 hover:bg-rose-900/60 border border-rose-800/50 text-rose-300 font-medium py-1.5 px-3 rounded-lg transition flex items-center gap-1.5"
-                >
-                  <Trash2 className="h-3.5 w-3.5" /> Limpiar Editor
-                </button>
+                <div className="flex gap-1.5">
+                  <button
+                    onClick={onClearEditor}
+                    className="text-xs bg-rose-950/40 hover:bg-rose-900/60 border border-rose-800/50 text-rose-300 font-medium py-1.5 px-3 rounded-lg transition flex items-center gap-1.5"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" /> Limpiar Editor
+                  </button>
+                  <label className="text-xs bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 font-medium py-1.5 px-3 rounded-lg transition flex items-center gap-1.5 cursor-pointer">
+                    <FileText className="h-3.5 w-3.5" /> Cargar .txt
+                    <input type="file" accept=".txt" onChange={handleFileUpload} className="hidden" />
+                  </label>
+                </div>
               </div>
 
               <textarea
