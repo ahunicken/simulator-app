@@ -24,7 +24,7 @@ Question 3
 
 a.54
 b.56
-Correct: Hint - 8 x 7 es igual a 56.
+Correct: 8 x 7 es igual a 56.
 c. 62
 d.48`;
 
@@ -75,6 +75,7 @@ export interface Option {
 export interface Question {
   id: number;
   title: string;
+  topic: string;
   subject: string;
   options: Option[];
   correctKey: string;
@@ -99,14 +100,4 @@ export interface QuizResults {
 export interface Notification {
   message: string;
   type: NotificationType;
-}
-
-export interface VisualCreator {
-  subject: string;
-  optA: string;
-  optB: string;
-  optC: string;
-  optD: string;
-  correctLetter: string;
-  hint: string;
 }

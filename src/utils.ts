@@ -1,14 +1,17 @@
 import { Question } from './constants';
 
+const decodeHTMLEntities = (text: string): string => {
+  return text
+    .replace(/&#39;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>');
+};
+
 export const isNoComment = (text: string): boolean => {
-  if (!text) return true;
-  const clean = text.trim().toLowerCase().replace(/[^a-z0-9áéíóúñ\s]/g, '');
-  const noCommentPhrases = [
-    'i dont have a comment', 'dont have a comment', 'no comment',
-    'no tengo comentario', 'no tengo explicacion', 'sin comentario',
-    'sin explicacion', 'none', 'nada', 'no'
-  ];
-  return noCommentPhrases.some(p => clean === p) || clean === '';
+  if (!text || !text.trim()) return true;
+  return false;
 };
 
 export const formatTime = (seconds: number): string => {
@@ -18,8 +21,13 @@ export const formatTime = (seconds: number): string => {
 };
 
 export const parseTextToQuestions = (text: string): Question[] => {
-  const cleanText = text.replace(/\r\n/g, '\n').trim();
+  const cleanText = decodeHTMLEntities(text).replace(/\r\n/g, '\n').trim();
   if (!cleanText) return [];
+
+  // Extract global Title: before any Question block
+  let globalTopic = '';
+  const globalTitleMatch = cleanText.match(/^Title\s*:\s*(.+)/im);
+  if (globalTitleMatch) globalTopic = globalTitleMatch[1].trim();
 
   const blocks: string[] = [];
   const questionRegex = /(?:^|\n)(?=Question\s+\d+)/i;
@@ -45,9 +53,12 @@ export const parseTextToQuestions = (text: string): Question[] => {
     }
 
     const subjectLines: string[] = [];
+    let topic = '';
     while (linePointer < lines.length) {
       const line = lines[linePointer];
-      if (/^[a-e]\s*[.\)]/i.test(line) || /^Correct(?:a)?\s*:/i.test(line)) break;
+      if (/^[a-e]\s*[.\)]/i.test(line) || /^Correct(?:a)?\s*[:\uff1a]/i.test(line)) break;
+      const titleMatch = line.match(/^Title\s*:\s*(.*)/i);
+      if (titleMatch) { topic = titleMatch[1].trim(); linePointer++; continue; }
       subjectLines.push(line);
       linePointer++;
     }
@@ -60,8 +71,8 @@ export const parseTextToQuestions = (text: string): Question[] => {
 
     while (linePointer < lines.length) {
       const line = lines[linePointer];
-      const optionMatch = line.match(/^([a-e])\s*[.\)]\s*(.*)/i);
-      const correctMatch = line.match(/^Correct(?:a)?\s*:\s*(.*)/i);
+      const optionMatch = line.match(/^([a-e])\s*[.\)](.*)/i);
+      const correctMatch = line.match(/^Correct(?:a)?\s*[:\uff1a]\s*(.*)/i);
 
       if (optionMatch) {
         const key = optionMatch[1].toLowerCase();
@@ -71,16 +82,26 @@ export const parseTextToQuestions = (text: string): Question[] => {
         const rawContent = correctMatch[1].trim();
         correctKey = lastOptionKey || 'a';
         const isSingleLetter = /^[a-e]$/i.test(rawContent);
-        hint = isSingleLetter ? '' : rawContent;
+        if (isSingleLetter) {
+          hint = '';
+        } else if (rawContent) {
+          hint = rawContent;
+        } else {
+          // Explanation is on the next line
+          const nextLine = lines[linePointer + 1];
+          if (nextLine && !/^[a-e]\s*[.\)]/i.test(nextLine) && !/^Correct(?:a)?\s*:/i.test(nextLine)) {
+            hint = nextLine;
+            linePointer++;
+          }
+        }
       }
       linePointer++;
     }
 
-    const cleanedHint = hint.replace(/^(hint|pista)\s*(?:-\s*|:\s*|\s+)/i, '').trim();
-    const finalHint = isNoComment(cleanedHint) ? '' : cleanedHint;
+    const finalHint = isNoComment(hint) ? '' : hint;
 
     if (subject && options.length > 0) {
-      result.push({ id: idx + 1, title, subject, options, correctKey: correctKey || 'a', hint: finalHint });
+      result.push({ id: idx + 1, title, topic: topic || globalTopic, subject, options, correctKey: correctKey || 'a', hint: finalHint });
     }
   });
 
@@ -134,7 +155,7 @@ export const parseTextToQuestionsContext2 = (text: string): Question[] => {
     }
 
     if (subject && options.length > 0) {
-      result.push({ id: idx + 1, title, subject, options, correctKey, hint: '' });
+      result.push({ id: idx + 1, title, topic: '', subject, options, correctKey, hint: '' });
     }
   });
 

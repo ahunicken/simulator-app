@@ -27,6 +27,14 @@ export default function QuizScreen({
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
       {/* Pregunta actual */}
       <div className="lg:col-span-8 space-y-4">
+        {q.topic && (
+          <div className="flex items-center gap-3">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Tema:</span>
+            <span className="text-sm font-semibold text-indigo-300 bg-indigo-500/10 border border-indigo-500/20 px-3 py-1.5 rounded-xl">
+              {q.topic}
+            </span>
+          </div>
+        )}
         <div className="bg-slate-950 border border-slate-800 rounded-2xl p-5 md:p-8 shadow-2xl">
           <div className="flex justify-between items-center mb-6">
             <div className="flex items-center gap-2">
@@ -91,7 +99,7 @@ export default function QuizScreen({
             })}
           </div>
 
-          {settings.instantFeedback && hasAnswered && q.hint && (
+          {hasAnswered && q.hint && (
             <div className="mt-6 p-4 rounded-xl bg-slate-900 border border-indigo-500/20 text-xs space-y-1">
               <div className="font-semibold text-indigo-300 flex items-center gap-1.5 text-sm">
                 <HelpCircle className="h-4 w-4" /> Explicación:

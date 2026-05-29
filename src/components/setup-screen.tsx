@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
-  BookOpen, CheckCircle, XCircle, FileText, HelpCircle, Sparkles,
-  PlusCircle, Trash2, Play, Award
+  BookOpen, CheckCircle, XCircle, FileText, HelpCircle,
+  Sparkles, Play, Award, Trash2
 } from 'lucide-react';
-import { Question, Settings, VisualCreator, QuestionContext } from '../constants';
+import { Question, Settings, QuestionContext } from '../constants';
 
 interface SetupScreenProps {
   rawText: string;
@@ -17,65 +17,25 @@ interface SetupScreenProps {
   onLoadTrial: () => void;
   onClearEditor: () => void;
   onStartExam: () => void;
-  onAddVisualQuestion: (creator: VisualCreator) => void;
 }
 
 export default function SetupScreen({
   rawText, setRawText, parsedQuestions, settings, setSettings,
   context, setContext,
-  onParseQuestions, onLoadTrial, onClearEditor, onStartExam, onAddVisualQuestion
+  onParseQuestions, onLoadTrial, onClearEditor, onStartExam
 }: SetupScreenProps) {
-  const [activeTab, setActiveTab] = useState<'raw' | 'visual'>('raw');
-  const [visualCreator, setVisualCreator] = useState<VisualCreator>({
-    subject: '', optA: '', optB: '', optC: '', optD: '', correctLetter: 'a', hint: ''
-  });
 
-  const placeholderContext1 = `Escribe o pega tus preguntas con el formato:
+  const placeholderContext1 = `Escribe o pega tus preguntas con el formato:\n\nQuestion 1\n\nTitle: Tema de la pregunta (opcional)\n\n¿Tu pregunta aquí?\n\na.Opción A\nb.Opción B\nCorrect: Tu explicación aquí (b es la correcta por estar ARRIBA del Correct:)\nc. Opción C\nd.Opción D\n\n¡Luego haz clic en "Interpretar y Cargar Preguntas" abajo para ver el preview e iniciar!`;
 
-Question 1
-
-¿Tu pregunta aquí?
-
-a.Opción A
-b.Opción B
-Correct: Tu explicación aquí (b es la correcta por estar ARRIBA del Correct:)
-c. Opción C
-d.Opción D
-
-¡Luego haz clic en "Interpretar y Cargar Preguntas" abajo para ver el preview e iniciar!`;
-
-  const placeholderContext2 = `Escribe o pega tus preguntas con el formato:
-
-Question 1 of 25
-
-¿Tu pregunta aquí?
-
-Select an answer:
-
-Opción A
-Opción B (The correct answer)
-Opción C
-Opción D
-
-Regla: Marca la opción correcta agregando (The correct answer) al final de la línea.
-¡Luego haz clic en "Interpretar y Cargar Preguntas" abajo para ver el preview e iniciar!`;
+  const placeholderContext2 = `Escribe o pega tus preguntas con el formato:\n\nQuestion 1 of 25\n\n¿Tu pregunta aquí?\n\nSelect an answer:\n\nOpción A\nOpción B (The correct answer)\nOpción C\nOpción D\n\nRegla: Marca la opción correcta agregando (The correct answer) al final de la línea.\n¡Luego haz clic en "Interpretar y Cargar Preguntas" abajo para ver el preview e iniciar!`;
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = (ev) => {
-      const text = ev.target?.result as string;
-      setRawText(text);
-    };
+    reader.onload = (ev) => setRawText(ev.target?.result as string);
     reader.readAsText(file);
     e.target.value = '';
-  };
-
-  const handleSubmitVisual = (e: React.FormEvent) => {
-    e.preventDefault();
-    onAddVisualQuestion(visualCreator);
-    setVisualCreator({ subject: '', optA: '', optB: '', optC: '', optD: '', correctLetter: 'a', hint: '' });
   };
 
   return (
@@ -83,21 +43,6 @@ Regla: Marca la opción correcta agregando (The correct answer) al final de la l
       {/* Columna Izquierda */}
       <div className="lg:col-span-8 space-y-6">
         <div className="bg-slate-950 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
-          {/* Tabs */}
-          <div className="flex border-b border-slate-800 bg-slate-950 p-2 gap-1">
-            <button
-              onClick={() => setActiveTab('raw')}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition ${activeTab === 'raw' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'}`}
-            >
-              <FileText className="h-4 w-4" /> Editor de Texto (Importar)
-            </button>
-            <button
-              onClick={() => setActiveTab('visual')}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition ${activeTab === 'visual' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'}`}
-            >
-              <PlusCircle className="h-4 w-4" /> Creador Visual
-            </button>
-          </div>
 
           {/* Selector de contexto */}
           <div className="flex items-center gap-2 px-4 pt-4">
@@ -115,159 +60,98 @@ Regla: Marca la opción correcta agregando (The correct answer) al final de la l
             ))}
           </div>
 
-          {/* Tab: Editor Raw */}
-          {activeTab === 'raw' && (
-            <div className="p-4 md:p-6 space-y-4">
-              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2">
-                <div>
-                  <h3 className="font-semibold text-white text-base">Escribe o pega tus preguntas</h3>
-                  <p className="text-xs text-slate-400">El editor se encuentra limpio para que agregues tu propio contenido.</p>
-                </div>
-                <div className="flex gap-1.5">
-                  <button
-                    onClick={onClearEditor}
-                    className="text-xs bg-rose-950/40 hover:bg-rose-900/60 border border-rose-800/50 text-rose-300 font-medium py-1.5 px-3 rounded-lg transition flex items-center gap-1.5"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" /> Limpiar Editor
-                  </button>
-                  <label className="text-xs bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 font-medium py-1.5 px-3 rounded-lg transition flex items-center gap-1.5 cursor-pointer">
-                    <FileText className="h-3.5 w-3.5" /> Cargar .txt
-                    <input type="file" accept=".txt" onChange={handleFileUpload} className="hidden" />
-                  </label>
-                </div>
+          <div className="p-4 md:p-6 space-y-4">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2">
+              <div>
+                <h3 className="font-semibold text-white text-base">Escribe o pega tus preguntas</h3>
+                <p className="text-xs text-slate-400">El editor se encuentra limpio para que agregues tu propio contenido.</p>
               </div>
-
-              <textarea
-                value={rawText}
-                onChange={(e) => setRawText(e.target.value)}
-                placeholder={context === 1 ? placeholderContext1 : placeholderContext2}
-                className="w-full h-80 bg-slate-900 text-slate-200 font-mono text-sm p-4 rounded-xl border border-slate-700 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 resize-y transition duration-200 placeholder-slate-600"
-              />
-
-              <div className="flex flex-col sm:flex-row gap-3 pt-2 justify-between items-stretch sm:items-center">
+              <div className="flex gap-1.5">
                 <button
-                  onClick={onLoadTrial}
-                  className="text-xs bg-slate-900 hover:bg-slate-800 border border-slate-700 text-indigo-300 hover:text-indigo-200 font-semibold py-2 px-4 rounded-xl transition flex items-center justify-center gap-1.5"
+                  onClick={onClearEditor}
+                  className="text-xs bg-rose-950/40 hover:bg-rose-900/60 border border-rose-800/50 text-rose-300 font-medium py-1.5 px-3 rounded-lg transition flex items-center gap-1.5"
                 >
-                  <Sparkles className="h-4 w-4" /> Cargar Versión de Prueba (Ejemplo)
+                  <Trash2 className="h-3.5 w-3.5" /> Limpiar Editor
                 </button>
-                <button
-                  onClick={onParseQuestions}
-                  className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm py-2.5 px-6 rounded-xl transition flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/10 active:scale-95"
-                >
-                  <Play className="h-4 w-4 fill-current" /> Interpretar y Cargar Preguntas
-                </button>
-              </div>
-
-              {/* Guía de formato */}
-              <div className="bg-slate-900/60 rounded-xl p-4 border border-slate-800 text-xs space-y-2">
-                <div className="font-semibold text-slate-300 flex items-center gap-1.5 text-sm">
-                  <HelpCircle className="h-4 w-4 text-indigo-400" /> Guía del formato — Contexto {context}:
-                </div>
-                {context === 1 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-slate-400 leading-relaxed font-mono">
-                    <div className="bg-slate-950 p-2.5 rounded border border-slate-800">
-                      <p className="text-indigo-300 text-[10px] mb-1 font-semibold uppercase font-sans">Estructura esperada</p>
-                      Question 1<br />
-                      ¿Pregunta o enunciado?<br /><br />
-                      a.Primera opción<br />
-                      b.Segunda opción<br />
-                      Correct: Explicación de la correcta<br />
-                      <span className="text-emerald-400/90 text-[10px] font-sans">^ (La opción correcta es la 'b' por estar arriba)</span><br />
-                      c. Tercera opción<br />
-                      d.Cuarta opción
-                    </div>
-                    <div className="space-y-1.5 font-sans flex flex-col justify-center text-[11px]">
-                      <p>✓ Comienza cada bloque con <span className="text-indigo-300 font-mono font-semibold">Question X</span>.</p>
-                      <p>✓ Las opciones comienzan con <span className="text-indigo-300 font-mono font-semibold">a.</span>, <span className="text-indigo-300 font-mono font-semibold">b.</span>, <span className="text-indigo-300 font-mono font-semibold">c.</span>, <span className="text-indigo-300 font-mono font-semibold">d.</span>.</p>
-                      <p>✓ <strong className="text-emerald-300">Regla de Posición:</strong> Coloca <span className="text-indigo-300 font-mono font-semibold">Correct: Explicación</span> inmediatamente debajo de la opción correcta.</p>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-slate-400 leading-relaxed font-mono">
-                    <div className="bg-slate-950 p-2.5 rounded border border-slate-800">
-                      <p className="text-indigo-300 text-[10px] mb-1 font-semibold uppercase font-sans">Estructura esperada</p>
-                      Question 1 of 25<br /><br />
-                      ¿Pregunta o enunciado?<br /><br />
-                      Select an answer:<br /><br />
-                      Primera opción<br />
-                      Segunda opción (The correct answer)<br />
-                      <span className="text-emerald-400/90 text-[10px] font-sans">^ marcada con (The correct answer)</span><br />
-                      Tercera opción<br />
-                      Cuarta opción
-                    </div>
-                    <div className="space-y-1.5 font-sans flex flex-col justify-center text-[11px]">
-                      <p>✓ Comienza cada bloque con <span className="text-indigo-300 font-mono font-semibold">Question X of Y</span>.</p>
-                      <p>✓ El enunciado va debajo del título.</p>
-                      <p>✓ Incluye la línea <span className="text-indigo-300 font-mono font-semibold">Select an answer:</span> antes de las opciones.</p>
-                      <p>✓ Las opciones son líneas simples de texto, sin prefijo de letra.</p>
-                      <p>✓ Marca la correcta agregando <span className="text-indigo-300 font-mono font-semibold">(The correct answer)</span> al final de la opción.</p>
-                    </div>
-                  </div>
-                )}
+                <label className="text-xs bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 font-medium py-1.5 px-3 rounded-lg transition flex items-center gap-1.5 cursor-pointer">
+                  <FileText className="h-3.5 w-3.5" /> Cargar .txt
+                  <input type="file" accept=".txt" onChange={handleFileUpload} className="hidden" />
+                </label>
               </div>
             </div>
-          )}
 
-          {/* Tab: Creador Visual */}
-          {activeTab === 'visual' && (
-            <form onSubmit={handleSubmitVisual} className="p-4 md:p-6 space-y-4">
-              <div>
-                <h3 className="font-semibold text-white text-base">Creador de Preguntas Asistido</h3>
-                <p className="text-xs text-slate-400">Rellena los campos y crearemos el formato de forma estructurada.</p>
+            <textarea
+              value={rawText}
+              onChange={(e) => setRawText(e.target.value)}
+              placeholder={context === 1 ? placeholderContext1 : placeholderContext2}
+              className="w-full h-80 bg-slate-900 text-slate-200 font-mono text-sm p-4 rounded-xl border border-slate-700 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 resize-y transition duration-200 placeholder-slate-600"
+            />
+
+            <div className="flex flex-col sm:flex-row gap-3 pt-2 justify-between items-stretch sm:items-center">
+              <button
+                onClick={onLoadTrial}
+                className="text-xs bg-slate-900 hover:bg-slate-800 border border-slate-700 text-indigo-300 hover:text-indigo-200 font-semibold py-2 px-4 rounded-xl transition flex items-center justify-center gap-1.5"
+              >
+                <Sparkles className="h-4 w-4" /> Cargar Versión de Prueba (Ejemplo)
+              </button>
+              <button
+                onClick={onParseQuestions}
+                className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm py-2.5 px-6 rounded-xl transition flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/10 active:scale-95"
+              >
+                <Play className="h-4 w-4 fill-current" /> Interpretar y Cargar Preguntas
+              </button>
+            </div>
+
+            {/* Guía de formato */}
+            <div className="bg-slate-900/60 rounded-xl p-4 border border-slate-800 text-xs space-y-2">
+              <div className="font-semibold text-slate-300 flex items-center gap-1.5 text-sm">
+                <HelpCircle className="h-4 w-4 text-indigo-400" /> Guía del formato — Contexto {context}:
               </div>
-              <div className="space-y-3">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">Enunciado o Pregunta *</label>
-                  <input type="text" required value={visualCreator.subject}
-                    onChange={(e) => setVisualCreator(p => ({ ...p, subject: e.target.value }))}
-                    placeholder="¿Qué es una API RESTful?"
-                    className="w-full bg-slate-900 rounded-xl border border-slate-700 px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500"
-                  />
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {(['A', 'B', 'C', 'D'] as const).map((letter) => {
-                    const key = `opt${letter}` as keyof VisualCreator;
-                    const isRequired = letter === 'A' || letter === 'B';
-                    return (
-                      <div key={letter}>
-                        <label className="block text-xs font-semibold text-slate-300 mb-1">Opción {letter} {isRequired ? '*' : '(Opcional)'}</label>
-                        <input type="text" required={isRequired} value={visualCreator[key] as string}
-                          onChange={(e) => setVisualCreator(p => ({ ...p, [key]: e.target.value }))}
-                          className="w-full bg-slate-900 rounded-xl border border-slate-700 px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500"
-                        />
-                      </div>
-                    );
-                  })}
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2 border-t border-slate-800">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1">Letra Correcta</label>
-                    <select value={visualCreator.correctLetter}
-                      onChange={(e) => setVisualCreator(p => ({ ...p, correctLetter: e.target.value }))}
-                      className="w-full bg-slate-900 rounded-xl border border-slate-700 px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500"
-                    >
-                      {['a', 'b', 'c', 'd'].map(l => <option key={l} value={l}>Opción {l.toUpperCase()}</option>)}
-                    </select>
+              {context === 1 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-slate-400 leading-relaxed font-mono">
+                  <div className="bg-slate-950 p-2.5 rounded border border-slate-800">
+                    <p className="text-indigo-300 text-[10px] mb-1 font-semibold uppercase font-sans">Estructura esperada</p>
+                    Question 1<br />
+                    Title: Tema opcional<br /><br />
+                    ¿Pregunta o enunciado?<br /><br />
+                    a.Primera opción<br />
+                    b.Segunda opción<br />
+                    Correct: Explicación de la correcta<br />
+                    <span className="text-emerald-400/90 text-[10px] font-sans">^ (La opción correcta es la 'b' por estar arriba)</span><br />
+                    c. Tercera opción<br />
+                    d.Cuarta opción
                   </div>
-                  <div className="md:col-span-2">
-                    <label className="block text-xs font-semibold text-slate-300 mb-1">Pista o Explicación (Dejar vacío si no tienes)</label>
-                    <input type="text" value={visualCreator.hint}
-                      onChange={(e) => setVisualCreator(p => ({ ...p, hint: e.target.value }))}
-                      placeholder="I don't have a comment."
-                      className="w-full bg-slate-900 rounded-xl border border-slate-700 px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500"
-                    />
+                  <div className="space-y-1.5 font-sans flex flex-col justify-center text-[11px]">
+                    <p>✓ Comienza cada bloque con <span className="text-indigo-300 font-mono font-semibold">Question X</span>.</p>
+                    <p>✓ Agrega <span className="text-indigo-300 font-mono font-semibold">Title: Tema</span> para identificar el tema (opcional).</p>
+                    <p>✓ Las opciones comienzan con <span className="text-indigo-300 font-mono font-semibold">a.</span>, <span className="text-indigo-300 font-mono font-semibold">b.</span>, <span className="text-indigo-300 font-mono font-semibold">c.</span>, <span className="text-indigo-300 font-mono font-semibold">d.</span>.</p>
+                    <p>✓ <strong className="text-emerald-300">Regla de Posición:</strong> Coloca <span className="text-indigo-300 font-mono font-semibold">Correct: Explicación</span> inmediatamente debajo de la opción correcta.</p>
                   </div>
                 </div>
-              </div>
-              <div className="pt-2 flex justify-between items-center">
-                <p className="text-[11px] text-amber-400">* Recuerda presionar "Interpretar y Cargar" en la pestaña del editor para consolidar el set.</p>
-                <button type="submit" className="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm px-5 py-2.5 rounded-xl transition flex items-center gap-2 shadow-lg shadow-indigo-600/20">
-                  <PlusCircle className="h-4 w-4" /> Agregar al Editor
-                </button>
-              </div>
-            </form>
-          )}
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-slate-400 leading-relaxed font-mono">
+                  <div className="bg-slate-950 p-2.5 rounded border border-slate-800">
+                    <p className="text-indigo-300 text-[10px] mb-1 font-semibold uppercase font-sans">Estructura esperada</p>
+                    Question 1 of 25<br /><br />
+                    ¿Pregunta o enunciado?<br /><br />
+                    Select an answer:<br /><br />
+                    Primera opción<br />
+                    Segunda opción (The correct answer)<br />
+                    <span className="text-emerald-400/90 text-[10px] font-sans">^ marcada con (The correct answer)</span><br />
+                    Tercera opción<br />
+                    Cuarta opción
+                  </div>
+                  <div className="space-y-1.5 font-sans flex flex-col justify-center text-[11px]">
+                    <p>✓ Comienza cada bloque con <span className="text-indigo-300 font-mono font-semibold">Question X of Y</span>.</p>
+                    <p>✓ El enunciado va debajo del título.</p>
+                    <p>✓ Incluye la línea <span className="text-indigo-300 font-mono font-semibold">Select an answer:</span> antes de las opciones.</p>
+                    <p>✓ Las opciones son líneas simples de texto, sin prefijo de letra.</p>
+                    <p>✓ Marca la correcta agregando <span className="text-indigo-300 font-mono font-semibold">(The correct answer)</span> al final de la opción.</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Preview de preguntas */}
@@ -297,6 +181,9 @@ Regla: Marca la opción correcta agregando (The correct answer) al final de la l
               <div className="space-y-3">
                 <div className="bg-slate-900/60 border border-slate-800 p-4 rounded-xl relative overflow-hidden">
                   <div className="absolute right-0 top-0 bg-indigo-600/10 text-indigo-300 text-[10px] px-2 py-0.5 rounded-bl border-b border-l border-indigo-800/30 font-semibold uppercase">Vista previa de formato</div>
+                  {q.topic && (
+                    <div className="mb-2 text-xs text-indigo-300 bg-indigo-500/10 border border-indigo-500/20 px-2 py-1 rounded-lg inline-block">{q.topic}</div>
+                  )}
                   <div className="flex items-start justify-between gap-4">
                     <div>
                       <span className="text-xs font-mono font-semibold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20">{q.title || `Pregunta ${q.id}`}</span>

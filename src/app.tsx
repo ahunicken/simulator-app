@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Award, ArrowLeft, Clock } from 'lucide-react';
 import {
   TRIAL_QUESTIONS_TEXT, TRIAL_QUESTIONS_TEXT_2, Screen, ResultsFilter,
-  Question, Settings, QuizResults, Notification as NotificationType, VisualCreator, QuestionContext
+  Question, Settings, QuizResults, Notification as NotificationType, QuestionContext
 } from './constants';
 import { parseTextToQuestions, parseTextToQuestionsContext2, formatTime } from './utils';
 import NotificationBanner from './components/notification';
@@ -83,31 +83,6 @@ export default function App() {
     setRawText('');
     setParsedQuestions([]);
     showNotification('Editor limpio y preguntas desvinculadas.', 'info');
-  };
-
-  const handleAddVisualQuestion = (creator: VisualCreator) => {
-    const { subject, optA, optB, optC, optD, correctLetter, hint } = creator;
-    if (!subject.trim() || !optA.trim() || !optB.trim()) {
-      showNotification('La pregunta y al menos las opciones A y B son obligatorias.', 'warning');
-      return;
-    }
-    const nextNum = parseTextToQuestions(rawText).length + 1;
-    let text = rawText.trim() ? '\n\n' : '';
-    text += `Question ${nextNum}\n\n${subject.trim()}\n\n`;
-    text += `a.${optA.trim()}\n`;
-    if (correctLetter === 'a') text += `Correct: ${hint.trim() || "I don't have a comment."}\n`;
-    text += `b.${optB.trim()}\n`;
-    if (correctLetter === 'b') text += `Correct: ${hint.trim() || "I don't have a comment."}\n`;
-    if (optC.trim()) {
-      text += `c. ${optC.trim()}\n`;
-      if (correctLetter === 'c') text += `Correct: ${hint.trim() || "I don't have a comment."}\n`;
-    }
-    if (optD.trim()) {
-      text += `d.${optD.trim()}\n`;
-      if (correctLetter === 'd') text += `Correct: ${hint.trim() || "I don't have a comment."}\n`;
-    }
-    setRawText(prev => prev + text);
-    showNotification(`¡Pregunta ${nextNum} agregada al editor!`, 'success');
   };
 
   const startExam = () => {
@@ -208,7 +183,6 @@ export default function App() {
             context={context} setContext={setContext}
             onParseQuestions={handleParseQuestions} onLoadTrial={handleLoadTrial}
             onClearEditor={handleClearEditor} onStartExam={startExam}
-            onAddVisualQuestion={handleAddVisualQuestion}
           />
         )}
         {currentScreen === 'quiz' && quizQuestions.length > 0 && (
