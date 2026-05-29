@@ -117,6 +117,11 @@ export const parseTextToQuestionsContext2 = (text: string): Question[] => {
     if (b.trim()) blocks.push(b.trim());
   });
 
+  // Extract global Title: before any Question block
+  let globalTopic = '';
+  const globalTitleMatch = cleanText.match(/^Title\s*:\s*(.+)/im);
+  if (globalTitleMatch) globalTopic = globalTitleMatch[1].trim();
+
   const result: Question[] = [];
   const keys = ['a', 'b', 'c', 'd', 'e'];
 
@@ -155,7 +160,7 @@ export const parseTextToQuestionsContext2 = (text: string): Question[] => {
     }
 
     if (subject && options.length > 0) {
-      result.push({ id: idx + 1, title, topic: '', subject, options, correctKey, hint: '' });
+      result.push({ id: idx + 1, title, topic: globalTopic || '', subject, options, correctKey, hint: '' });
     }
   });
 

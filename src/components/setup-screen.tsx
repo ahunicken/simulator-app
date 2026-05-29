@@ -25,9 +25,9 @@ export default function SetupScreen({
   onParseQuestions, onLoadTrial, onClearEditor, onStartExam
 }: SetupScreenProps) {
 
-  const placeholderContext1 = `Escribe o pega tus preguntas con el formato:\n\nQuestion 1\n\nTitle: Tema de la pregunta (opcional)\n\n¿Tu pregunta aquí?\n\na.Opción A\nb.Opción B\nCorrect: Tu explicación aquí (b es la correcta por estar ARRIBA del Correct:)\nc. Opción C\nd.Opción D\n\n¡Luego haz clic en "Interpretar y Cargar Preguntas" abajo para ver el preview e iniciar!`;
+  const placeholderContext1 = `Title: Tema de la pregunta (opcional)\n\nEscribe o pega tus preguntas con el formato:\n\nQuestion 1\n\n¿Tu pregunta aquí?\n\na.Opción A\nb.Opción B\nCorrect: Tu explicación aquí (b es la correcta por estar ARRIBA del Correct:)\nc. Opción C\nd.Opción D\n\n¡Luego haz clic en "Interpretar y Cargar Preguntas" abajo para ver el preview e iniciar!`;
 
-  const placeholderContext2 = `Escribe o pega tus preguntas con el formato:\n\nQuestion 1 of 25\n\n¿Tu pregunta aquí?\n\nSelect an answer:\n\nOpción A\nOpción B (The correct answer)\nOpción C\nOpción D\n\nRegla: Marca la opción correcta agregando (The correct answer) al final de la línea.\n¡Luego haz clic en "Interpretar y Cargar Preguntas" abajo para ver el preview e iniciar!`;
+  const placeholderContext2 = `Title: Tema de la pregunta (opcional)\n\nEscribe o pega tus preguntas con el formato:\n\nQuestion 1 of 25\n\n¿Tu pregunta aquí?\n\nSelect an answer:\n\nOpción A\nOpción B (The correct answer)\nOpción C\nOpción D\n\nRegla: Marca la opción correcta agregando (The correct answer) al final de la línea.\n¡Luego haz clic en "Interpretar y Cargar Preguntas" abajo para ver el preview e iniciar!`;
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -133,6 +133,7 @@ export default function SetupScreen({
                   <div className="bg-slate-950 p-2.5 rounded border border-slate-800">
                     <p className="text-indigo-300 text-[10px] mb-1 font-semibold uppercase font-sans">Estructura esperada</p>
                     Question 1 of 25<br /><br />
+                    Title: Tema opcional<br /><br />
                     ¿Pregunta o enunciado?<br /><br />
                     Select an answer:<br /><br />
                     Primera opción<br />
@@ -143,6 +144,7 @@ export default function SetupScreen({
                   </div>
                   <div className="space-y-1.5 font-sans flex flex-col justify-center text-[11px]">
                     <p>✓ Comienza cada bloque con <span className="text-indigo-300 font-mono font-semibold">Question X of Y</span>.</p>
+                    <p>✓ Agrega <span className="text-indigo-300 font-mono font-semibold">Title: Tema</span> para identificar el tema (opcional).</p>
                     <p>✓ El enunciado va debajo del título.</p>
                     <p>✓ Incluye la línea <span className="text-indigo-300 font-mono font-semibold">Select an answer:</span> antes de las opciones.</p>
                     <p>✓ Las opciones son líneas simples de texto, sin prefijo de letra.</p>
