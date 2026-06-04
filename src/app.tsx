@@ -2,7 +2,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Award, ArrowLeft, Clock } from 'lucide-react';
 import {
   TRIAL_QUESTIONS_TEXT, TRIAL_QUESTIONS_TEXT_2, Screen, ResultsFilter,
-  Question, Settings, QuizResults, Notification as NotificationType, QuestionContext
+  Question, Settings, QuizResults, Notification as NotificationType, QuestionContext,
+  LLMConfig, LLM_MODELS
 } from './constants';
 import { parseTextToQuestions, parseTextToQuestionsContext2, formatTime } from './utils';
 import NotificationBanner from './components/notification';
@@ -13,6 +14,9 @@ import { ExitConfirmModal, SubmitConfirmModal } from './components/modals';
 
 export default function App() {
   const [context, setContext] = useState<QuestionContext>(1);
+  const [llmConfig, setLlmConfig] = useState<LLMConfig>({
+    provider: 'openai', model: LLM_MODELS.openai[0], apiKey: '',
+  });
   const [rawText, setRawText] = useState('');
   const [parsedQuestions, setParsedQuestions] = useState<Question[]>([]);
   const [currentScreen, setCurrentScreen] = useState<Screen>('setup');
@@ -181,6 +185,7 @@ export default function App() {
             rawText={rawText} setRawText={setRawText}
             parsedQuestions={parsedQuestions} settings={settings} setSettings={setSettings}
             context={context} setContext={setContext}
+            llmConfig={llmConfig} setLlmConfig={setLlmConfig}
             onParseQuestions={handleParseQuestions} onLoadTrial={handleLoadTrial}
             onClearEditor={handleClearEditor} onStartExam={startExam}
           />
@@ -189,6 +194,7 @@ export default function App() {
           <QuizScreen
             quizQuestions={quizQuestions} currentIdx={currentIdx} setCurrentIdx={setCurrentIdx}
             answers={answers} flagged={flagged} settings={settings}
+            llmConfig={llmConfig}
             onSelectOption={(key) => {
               const q = quizQuestions[currentIdx];
               setAnswers(p => ({ ...p, [q.id]: key }));

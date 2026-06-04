@@ -159,8 +159,11 @@ export const parseTextToQuestionsContext2 = (text: string): Question[] => {
       linePointer++;
     }
 
+    const correctOption = options.find(o => o.key === correctKey);
+    const hint = correctOption ? `Respuesta correcta: ${correctOption.text}` : '';
+
     if (subject && options.length > 0) {
-      result.push({ id: idx + 1, title, topic: globalTopic || '', subject, options, correctKey, hint: '' });
+      result.push({ id: idx + 1, title, topic: globalTopic || '', subject, options, correctKey, hint });
     }
   });
 

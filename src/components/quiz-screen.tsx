@@ -1,6 +1,8 @@
 import React from 'react';
-import { ArrowLeft, ArrowRight, CheckCircle, Bookmark, HelpCircle } from 'lucide-react';
-import { Question, Settings } from '../constants';
+import { ArrowLeft, ArrowRight, CheckCircle, Bookmark, HelpCircle, Languages, Loader2 } from 'lucide-react';
+import { Question, Settings, LLMConfig } from '../constants';
+import { translateQuestion } from '../translate';
+import TranslateModal from './translate-modal';
 
 interface QuizScreenProps {
   quizQuestions: Question[];
@@ -9,6 +11,7 @@ interface QuizScreenProps {
   answers: Record<number, string>;
   flagged: Record<number, boolean>;
   settings: Settings;
+  llmConfig: LLMConfig;
   onSelectOption: (key: string) => void;
   onToggleFlag: (id: number) => void;
   onSubmit: () => void;
@@ -17,11 +20,32 @@ interface QuizScreenProps {
 
 export default function QuizScreen({
   quizQuestions, currentIdx, setCurrentIdx, answers, flagged,
-  settings, onSelectOption, onToggleFlag, onSubmit, onExitRequest
+  settings, llmConfig, onSelectOption, onToggleFlag, onSubmit, onExitRequest
 }: QuizScreenProps) {
   const q = quizQuestions[currentIdx];
   const userAnswer = answers[q.id];
   const hasAnswered = userAnswer !== undefined;
+
+  const [translations, setTranslations] = React.useState<Record<number, string>>({});
+  const [loadingId, setLoadingId] = React.useState<number | null>(null);
+  const [modalError, setModalError] = React.useState<string | null>(null);
+  const [showModal, setShowModal] = React.useState(false);
+
+  const handleTranslate = async () => {
+    if (translations[q.id]) { setShowModal(true); return; }
+    setLoadingId(q.id);
+    setModalError(null);
+    setShowModal(true);
+    try {
+      const result = await translateQuestion(q, llmConfig.model);
+      setTranslations(p => ({ ...p, [q.id]: result }));
+    } catch (e: any) {
+      console.error('Translation error:', e);
+      setModalError(e.message || 'Error al traducir.');
+    } finally {
+      setLoadingId(null);
+    }
+  };
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -47,13 +71,29 @@ export default function QuizScreen({
                 </span>
               )}
             </div>
-            <button
-              onClick={() => onToggleFlag(q.id)}
-              className={`p-2 rounded-xl border transition flex items-center gap-1.5 text-xs font-semibold ${flagged[q.id] ? 'bg-amber-950/40 border-amber-500/40 text-amber-300 hover:bg-amber-900/40' : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-300 hover:bg-slate-800'}`}
-            >
-              <Bookmark className={`h-4 w-4 ${flagged[q.id] ? 'fill-current' : ''}`} />
-              <span>{flagged[q.id] ? 'Marcada' : 'Marcar para repasar'}</span>
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleTranslate}
+                disabled={loadingId === q.id}
+                className={`p-2 rounded-xl border transition flex items-center gap-1.5 text-xs font-semibold ${
+                  translations[q.id]
+                    ? 'bg-violet-950/40 border-violet-500/40 text-violet-300 hover:bg-violet-900/40'
+                    : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-300 hover:bg-slate-800'
+                }`}
+              >
+                {loadingId === q.id
+                  ? <Loader2 className="h-4 w-4 animate-spin" />
+                  : <Languages className="h-4 w-4" />}
+                <span>{translations[q.id] ? 'Ocultar' : 'Traducir'}</span>
+              </button>
+              <button
+                onClick={() => onToggleFlag(q.id)}
+                className={`p-2 rounded-xl border transition flex items-center gap-1.5 text-xs font-semibold ${flagged[q.id] ? 'bg-amber-950/40 border-amber-500/40 text-amber-300 hover:bg-amber-900/40' : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-300 hover:bg-slate-800'}`}
+              >
+                <Bookmark className={`h-4 w-4 ${flagged[q.id] ? 'fill-current' : ''}`} />
+                <span>{flagged[q.id] ? 'Marcada' : 'Marcar para repasar'}</span>
+              </button>
+            </div>
           </div>
 
           <h2 className="text-lg md:text-xl font-bold text-white leading-relaxed mb-6">{q.subject}</h2>
@@ -135,6 +175,18 @@ export default function QuizScreen({
           )}
         </div>
       </div>
+
+      {showModal && (
+        <TranslateModal
+          label={q.title || `Pregunta ${currentIdx + 1}`}
+          provider={llmConfig.provider}
+          model={llmConfig.model}
+          isLoading={loadingId === q.id}
+          error={modalError}
+          translation={translations[q.id]}
+          onClose={() => setShowModal(false)}
+        />
+      )}
 
       {/* Panel lateral: índice */}
       <div className="lg:col-span-4">

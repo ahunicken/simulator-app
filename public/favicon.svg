@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Background rounded square -->
+  <rect width="32" height="32" rx="8" fill="#4f46e5"/>
+  <!-- Star -->
+  <path d="M16 5 L19 11 L25.5 11 L20.5 14.8 L22.5 21 L16 17.2 L9.5 21 L11.5 14.8 L6.5 11 L13 11 Z"
+        fill="#ffffff"/>
+  <!-- Medal ribbon -->
+  <rect x="13.5" y="19.5" width="2.2" height="3.5" rx="0.5" fill="#c7d2fe"/>
+  <rect x="16.3" y="19.5" width="2.2" height="3.5" rx="0.5" fill="#c7d2fe"/>
+  <!-- Medal circle -->
+  <circle cx="16" cy="26" r="3.5" fill="#e0e7ff"/>
+  <circle cx="16" cy="26" r="2" fill="#4f46e5"/>
+</svg>

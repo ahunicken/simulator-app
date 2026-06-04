@@ -63,6 +63,19 @@ The model clusters data into groups without guidance.`;
 
 export type QuestionContext = 1 | 2;
 
+export type LLMProvider = 'openai' | 'gemini';
+
+export const LLM_MODELS: Record<LLMProvider, string[]> = {
+  openai: ['gpt-5-nano', 'gpt-4o-mini', 'gpt-4-nano'],
+  gemini: ['gemini-2.5-flash', 'gemini-3-flash-lite', 'gemini-3.5-flash'],
+};
+
+export interface LLMConfig {
+  provider: LLMProvider;
+  model: string;
+  apiKey: string;
+}
+
 export type Screen = 'setup' | 'quiz' | 'results';
 export type ResultsFilter = 'all' | 'correct' | 'incorrect' | 'flagged';
 export type NotificationType = 'success' | 'warning' | 'error' | 'info';

@@ -3,7 +3,7 @@ import {
   BookOpen, CheckCircle, XCircle, FileText, HelpCircle,
   Sparkles, Play, Award, Trash2
 } from 'lucide-react';
-import { Question, Settings, QuestionContext } from '../constants';
+import { Question, Settings, QuestionContext, LLMConfig, LLM_MODELS } from '../constants';
 
 interface SetupScreenProps {
   rawText: string;
@@ -13,6 +13,8 @@ interface SetupScreenProps {
   setSettings: React.Dispatch<React.SetStateAction<Settings>>;
   context: QuestionContext;
   setContext: (c: QuestionContext) => void;
+  llmConfig: LLMConfig;
+  setLlmConfig: React.Dispatch<React.SetStateAction<LLMConfig>>;
   onParseQuestions: () => void;
   onLoadTrial: () => void;
   onClearEditor: () => void;
@@ -21,10 +23,9 @@ interface SetupScreenProps {
 
 export default function SetupScreen({
   rawText, setRawText, parsedQuestions, settings, setSettings,
-  context, setContext,
+  context, setContext, llmConfig, setLlmConfig,
   onParseQuestions, onLoadTrial, onClearEditor, onStartExam
 }: SetupScreenProps) {
-
   const placeholderContext1 = `Title: Tema de la pregunta (opcional)\n\nEscribe o pega tus preguntas con el formato:\n\nQuestion 1\n\n¿Tu pregunta aquí?\n\na.Opción A\nb.Opción B\nCorrect: Tu explicación aquí (b es la correcta por estar ARRIBA del Correct:)\nc. Opción C\nd.Opción D\n\n¡Luego haz clic en "Interpretar y Cargar Preguntas" abajo para ver el preview e iniciar!`;
 
   const placeholderContext2 = `Title: Tema de la pregunta (opcional)\n\nEscribe o pega tus preguntas con el formato:\n\nQuestion 1 of 25\n\n¿Tu pregunta aquí?\n\nSelect an answer:\n\nOpción A\nOpción B (The correct answer)\nOpción C\nOpción D\n\nRegla: Marca la opción correcta agregando (The correct answer) al final de la línea.\n¡Luego haz clic en "Interpretar y Cargar Preguntas" abajo para ver el preview e iniciar!`;
@@ -44,20 +45,36 @@ export default function SetupScreen({
       <div className="lg:col-span-8 space-y-6">
         <div className="bg-slate-950 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
 
-          {/* Selector de contexto */}
-          <div className="flex items-center gap-2 px-4 pt-4">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Formato:</span>
-            {([1, 2] as QuestionContext[]).map(c => (
-              <button key={c} onClick={() => setContext(c)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition ${
-                  context === c
-                    ? 'bg-indigo-600 border-indigo-500 text-white'
-                    : 'bg-slate-900 border-slate-700 text-slate-400 hover:text-slate-200 hover:bg-slate-800'
-                }`}
+          {/* Selector de contexto y LLM */}
+          <div className="flex flex-wrap items-center gap-3 px-4 pt-4">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Formato:</span>
+              {([1, 2] as QuestionContext[]).map(c => (
+                <button key={c} onClick={() => setContext(c)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition ${
+                    context === c
+                      ? 'bg-indigo-600 border-indigo-500 text-white'
+                      : 'bg-slate-900 border-slate-700 text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                  }`}
+                >
+                  Contexto {c}
+                </button>
+              ))}
+            </div>
+            <div className="w-px h-5 bg-slate-700 hidden sm:block" />
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Traducción:</span>
+              <span className="px-3 py-1.5 rounded-lg text-xs font-semibold border bg-violet-600 border-violet-500 text-white">OpenAI</span>
+              <select
+                value={llmConfig.model}
+                onChange={e => setLlmConfig(p => ({ ...p, model: e.target.value }))}
+                className="bg-slate-900 border border-slate-700 text-slate-300 text-xs rounded-lg px-2 py-1.5 font-mono focus:outline-none focus:border-violet-500"
               >
-                Contexto {c}
-              </button>
-            ))}
+                {LLM_MODELS.openai.map(m => (
+                  <option key={m} value={m}>{m}</option>
+                ))}
+              </select>
+            </div>
           </div>
 
           <div className="p-4 md:p-6 space-y-4">
