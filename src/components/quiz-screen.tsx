@@ -192,7 +192,7 @@ export default function QuizScreen({
       <div className="lg:col-span-4">
         <div className="bg-slate-950 border border-slate-800 rounded-2xl p-5 shadow-2xl space-y-5">
           <div className="border-b border-slate-800 pb-3 flex justify-between items-center">
-            <h3 className="font-bold text-white text-sm uppercase tracking-wider text-slate-400">Índice del Examen</h3>
+            <h3 className="font-bold text-white text-sm uppercase tracking-wider">Índice del Examen</h3>
             <span className="text-xs text-slate-400 font-semibold font-mono">{Object.keys(answers).length}/{quizQuestions.length} Resueltas</span>
           </div>
 
