@@ -1,8 +1,7 @@
 import React from 'react';
 import { ArrowLeft, ArrowRight, CheckCircle, Bookmark, HelpCircle, Languages, Loader2 } from 'lucide-react';
 import { Question, Settings, LLMConfig } from '../constants';
-import { translateQuestion } from '../translate';
-import TranslateModal from './translate-modal';
+import { translateQuestion, translateText } from '../translate';
 
 interface QuizScreenProps {
   quizQuestions: Question[];
@@ -27,23 +26,42 @@ export default function QuizScreen({
   const hasAnswered = userAnswer !== undefined;
 
   const [translations, setTranslations] = React.useState<Record<number, string>>({});
+  const [hintTranslations, setHintTranslations] = React.useState<Record<number, string>>({});
   const [loadingId, setLoadingId] = React.useState<number | null>(null);
-  const [modalError, setModalError] = React.useState<string | null>(null);
-  const [showModal, setShowModal] = React.useState(false);
+  const [loadingHintId, setLoadingHintId] = React.useState<number | null>(null);
 
   const handleTranslate = async () => {
-    if (translations[q.id]) { setShowModal(true); return; }
+    if (translations[q.id]) return;
     setLoadingId(q.id);
-    setModalError(null);
-    setShowModal(true);
     try {
       const result = await translateQuestion(q, llmConfig.model);
       setTranslations(p => ({ ...p, [q.id]: result }));
     } catch (e: any) {
       console.error('Translation error:', e);
-      setModalError(e.message || 'Error al traducir.');
     } finally {
       setLoadingId(null);
+    }
+  };
+
+  const getFullHint = (question: typeof q): string => {
+    const correctOption = question.options.find(o => o.key === question.correctKey);
+    const correctLine = correctOption ? `Correct answer: ${correctOption.text}` : '';
+    if (question.hint && !question.hint.startsWith('Respuesta correcta:'))
+      return `${correctLine}\n${question.hint}`;
+    return correctLine || question.hint;
+  };
+
+  const handleTranslateHint = async () => {
+    const fullHint = getFullHint(q);
+    if (hintTranslations[q.id] || !fullHint) return;
+    setLoadingHintId(q.id);
+    try {
+      const result = await translateText(fullHint, llmConfig.model);
+      setHintTranslations(p => ({ ...p, [q.id]: result }));
+    } catch (e: any) {
+      console.error('Translation error:', e);
+    } finally {
+      setLoadingHintId(null);
     }
   };
 
@@ -74,17 +92,17 @@ export default function QuizScreen({
             <div className="flex items-center gap-2">
               <button
                 onClick={handleTranslate}
-                disabled={loadingId === q.id}
+                disabled={loadingId === q.id || !!translations[q.id]}
                 className={`p-2 rounded-xl border transition flex items-center gap-1.5 text-xs font-semibold ${
                   translations[q.id]
-                    ? 'bg-violet-950/40 border-violet-500/40 text-violet-300 hover:bg-violet-900/40'
+                    ? 'bg-violet-950/40 border-violet-500/40 text-violet-300'
                     : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-300 hover:bg-slate-800'
                 }`}
+                title="Traducir pregunta"
               >
                 {loadingId === q.id
                   ? <Loader2 className="h-4 w-4 animate-spin" />
                   : <Languages className="h-4 w-4" />}
-                <span>{translations[q.id] ? 'Ocultar' : 'Traducir'}</span>
               </button>
               <button
                 onClick={() => onToggleFlag(q.id)}
@@ -96,7 +114,14 @@ export default function QuizScreen({
             </div>
           </div>
 
-          <h2 className="text-lg md:text-xl font-bold text-white leading-relaxed mb-6">{q.subject}</h2>
+          <div className="relative group mb-6">
+            <h2 className="text-lg md:text-xl font-bold text-white leading-relaxed">{q.subject}</h2>
+            {translations[q.id] && (
+              <div className="absolute inset-0 bg-slate-950 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center rounded-lg px-1">
+                <p className="text-lg md:text-xl font-bold text-violet-200 leading-relaxed">{translations[q.id]}</p>
+              </div>
+            )}
+          </div>
 
           <div className="space-y-3">
             {q.options.map((opt, oIdx) => {
@@ -139,13 +164,34 @@ export default function QuizScreen({
             })}
           </div>
 
-          {hasAnswered && q.hint && (
-            <div className="mt-6 p-4 rounded-xl bg-slate-900 border border-indigo-500/20 text-xs space-y-1">
-              <div className="font-semibold text-indigo-300 flex items-center gap-1.5 text-sm">
-                <HelpCircle className="h-4 w-4" /> Explicación:
-              </div>
-              <p className="text-slate-400 text-sm leading-relaxed">{q.hint}</p>
-            </div>
+          {hasAnswered && (
+            (() => {
+              const fullHint = getFullHint(q);
+              if (!fullHint) return null;
+              return (
+                <div className="mt-6 p-4 rounded-xl bg-slate-900 border border-indigo-500/20 space-y-1">
+                  <div className="font-semibold text-indigo-300 flex items-center gap-1.5 text-sm">
+                    <HelpCircle className="h-4 w-4" /> Explicación:
+                    <button
+                      onClick={handleTranslateHint}
+                      disabled={loadingHintId === q.id || !!hintTranslations[q.id]}
+                      className="ml-auto p-1 rounded-lg border border-slate-700 bg-slate-800 text-slate-400 hover:text-slate-300 hover:bg-slate-700 transition disabled:opacity-40"
+                      title="Traducir explicación"
+                    >
+                      {loadingHintId === q.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Languages className="h-3.5 w-3.5" />}
+                    </button>
+                  </div>
+                  <div className="relative group">
+                    <p className="text-slate-400 text-sm leading-relaxed whitespace-pre-line">{fullHint}</p>
+                    {hintTranslations[q.id] && (
+                      <div className="absolute inset-0 bg-slate-900 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center rounded">
+                        <p className="text-violet-300 text-sm leading-relaxed whitespace-pre-line">{hintTranslations[q.id]}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })()
           )}
         </div>
 
@@ -175,18 +221,6 @@ export default function QuizScreen({
           )}
         </div>
       </div>
-
-      {showModal && (
-        <TranslateModal
-          label={q.title || `Pregunta ${currentIdx + 1}`}
-          provider={llmConfig.provider}
-          model={llmConfig.model}
-          isLoading={loadingId === q.id}
-          error={modalError}
-          translation={translations[q.id]}
-          onClose={() => setShowModal(false)}
-        />
-      )}
 
       {/* Panel lateral: índice */}
       <div className="lg:col-span-4">
