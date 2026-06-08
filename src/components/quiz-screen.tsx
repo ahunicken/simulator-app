@@ -1,7 +1,7 @@
 import React from 'react';
 import { ArrowLeft, ArrowRight, CheckCircle, Bookmark, HelpCircle, Languages, Loader2 } from 'lucide-react';
 import { Question, Settings, LLMConfig } from '../constants';
-import { translateQuestion, translateText } from '../translate';
+import { translateFullQuestion, translateText, FullTranslation } from '../translate';
 
 interface QuizScreenProps {
   quizQuestions: Question[];
@@ -25,7 +25,7 @@ export default function QuizScreen({
   const userAnswer = answers[q.id];
   const hasAnswered = userAnswer !== undefined;
 
-  const [translations, setTranslations] = React.useState<Record<number, string>>({});
+  const [translations, setTranslations] = React.useState<Record<number, FullTranslation>>({});
   const [hintTranslations, setHintTranslations] = React.useState<Record<number, string>>({});
   const [loadingId, setLoadingId] = React.useState<number | null>(null);
   const [loadingHintId, setLoadingHintId] = React.useState<number | null>(null);
@@ -34,7 +34,7 @@ export default function QuizScreen({
     if (translations[q.id]) return;
     setLoadingId(q.id);
     try {
-      const result = await translateQuestion(q, llmConfig.model);
+      const result = await translateFullQuestion(q, llmConfig.model);
       setTranslations(p => ({ ...p, [q.id]: result }));
     } catch (e: any) {
       console.error('Translation error:', e);
@@ -46,9 +46,12 @@ export default function QuizScreen({
   const getFullHint = (question: typeof q): string => {
     const correctOption = question.options.find(o => o.key === question.correctKey);
     const correctLine = correctOption ? `Correct answer: ${correctOption.text}` : '';
-    if (question.hint && !question.hint.startsWith('Respuesta correcta:'))
-      return `${correctLine}\n${question.hint}`;
-    return correctLine || question.hint;
+    
+    if (!question.hint) return correctLine;
+    if (question.hint.startsWith('Respuesta correcta:') || question.hint.startsWith('Correct answer:')) {
+      return question.hint;
+    }
+    return `${correctLine}\n\nExplicación: ${question.hint}`;
   };
 
   const handleTranslateHint = async () => {
@@ -91,6 +94,7 @@ export default function QuizScreen({
             </div>
             <div className="flex items-center gap-2">
               <button
+                id="translate-question-btn"
                 onClick={handleTranslate}
                 disabled={loadingId === q.id || !!translations[q.id]}
                 className={`p-2 rounded-xl border transition flex items-center gap-1.5 text-xs font-semibold ${
@@ -114,13 +118,10 @@ export default function QuizScreen({
             </div>
           </div>
 
-          <div className="relative group mb-6">
-            <h2 className="text-lg md:text-xl font-bold text-white leading-relaxed">{q.subject}</h2>
-            {translations[q.id] && (
-              <div className="absolute inset-0 bg-slate-950 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center rounded-lg px-1">
-                <p className="text-lg md:text-xl font-bold text-violet-200 leading-relaxed">{translations[q.id]}</p>
-              </div>
-            )}
+          <div className="mb-6">
+            <h2 className={`text-lg md:text-xl font-bold leading-relaxed ${translations[q.id] ? 'text-violet-200' : 'text-white'}`}>
+              {translations[q.id] ? translations[q.id].subject : q.subject}
+            </h2>
           </div>
 
           <div className="space-y-3">
@@ -158,7 +159,11 @@ export default function QuizScreen({
                   className={`w-full text-left p-4 rounded-xl border flex items-center gap-4 transition-all duration-150 ${optBg}`}
                 >
                   <span className={`font-mono text-sm w-7 h-7 shrink-0 flex items-center justify-center rounded-lg border uppercase transition duration-150 ${badgeClass}`}>{opt.key}</span>
-                  <span className="text-sm md:text-base">{opt.text}</span>
+                  <div className="flex-1">
+                    <span className="text-sm md:text-base">
+                      {translations[q.id]?.options[opt.key] || opt.text}
+                    </span>
+                  </div>
                 </button>
               );
             })}
@@ -173,21 +178,19 @@ export default function QuizScreen({
                   <div className="font-semibold text-indigo-300 flex items-center gap-1.5 text-sm">
                     <HelpCircle className="h-4 w-4" /> Explicación:
                     <button
+                      id="translate-hint-btn"
                       onClick={handleTranslateHint}
-                      disabled={loadingHintId === q.id || !!hintTranslations[q.id]}
+                      disabled={loadingHintId === q.id || !!hintTranslations[q.id] || !!translations[q.id]?.hint}
                       className="ml-auto p-1 rounded-lg border border-slate-700 bg-slate-800 text-slate-400 hover:text-slate-300 hover:bg-slate-700 transition disabled:opacity-40"
                       title="Traducir explicación"
                     >
                       {loadingHintId === q.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Languages className="h-3.5 w-3.5" />}
                     </button>
                   </div>
-                  <div className="relative group">
-                    <p className="text-slate-400 text-sm leading-relaxed whitespace-pre-line">{fullHint}</p>
-                    {hintTranslations[q.id] && (
-                      <div className="absolute inset-0 bg-slate-900 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center rounded">
-                        <p className="text-violet-300 text-sm leading-relaxed whitespace-pre-line">{hintTranslations[q.id]}</p>
-                      </div>
-                    )}
+                  <div>
+                    <p className={`text-sm leading-relaxed whitespace-pre-line ${(hintTranslations[q.id] || translations[q.id]?.hint) ? 'text-violet-300' : 'text-slate-400'}`}>
+                      {(hintTranslations[q.id] || translations[q.id]?.hint) ? (hintTranslations[q.id] || translations[q.id]?.hint) : fullHint}
+                    </p>
                   </div>
                 </div>
               );
