@@ -44,22 +44,14 @@ export default function QuizScreen({
   };
 
   const getFullHint = (question: typeof q): string => {
-    const correctOption = question.options.find(o => o.key === question.correctKey);
-    const correctLine = correctOption ? `Correct answer: ${correctOption.text}` : '';
-    
-    if (!question.hint) return correctLine;
-    if (question.hint.startsWith('Respuesta correcta:') || question.hint.startsWith('Correct answer:')) {
-      return question.hint;
-    }
-    return `${correctLine}\n\nExplicación: ${question.hint}`;
+    return question.hint || '';
   };
 
   const handleTranslateHint = async () => {
-    const fullHint = getFullHint(q);
-    if (hintTranslations[q.id] || !fullHint) return;
+    if (hintTranslations[q.id] || translations[q.id]?.hint) return;
     setLoadingHintId(q.id);
     try {
-      const result = await translateText(fullHint, llmConfig.model);
+      const result = await translateText(q, llmConfig.model);
       setHintTranslations(p => ({ ...p, [q.id]: result }));
     } catch (e: any) {
       console.error('Translation error:', e);
@@ -87,7 +79,7 @@ export default function QuizScreen({
                 {q.title || `Pregunta ${currentIdx + 1}`}
               </span>
               {flagged[q.id] && (
-                <span className="bg-amber-500/10 text-amber-300 text-xs px-2 py-0.5 rounded-lg border border-amber-500/20 flex items-center gap-1 font-semibold animate-pulse">
+                <span className="bg-yellow-500/10 text-yellow-300 text-xs px-2 py-0.5 rounded-lg border border-yellow-500/20 flex items-center gap-1 font-semibold animate-pulse">
                   <Bookmark className="h-3.5 w-3.5 fill-current" /> Marcada
                 </span>
               )}
@@ -110,7 +102,7 @@ export default function QuizScreen({
               </button>
               <button
                 onClick={() => onToggleFlag(q.id)}
-                className={`p-2 rounded-xl border transition flex items-center gap-1.5 text-xs font-semibold ${flagged[q.id] ? 'bg-amber-950/40 border-amber-500/40 text-amber-300 hover:bg-amber-900/40' : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-300 hover:bg-slate-800'}`}
+                className={`p-2 rounded-xl border transition flex items-center gap-1.5 text-xs font-semibold ${flagged[q.id] ? 'bg-yellow-950/40 border-yellow-500/40 text-yellow-300 hover:bg-yellow-900/40' : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-300 hover:bg-slate-800'}`}
               >
                 <Bookmark className={`h-4 w-4 ${flagged[q.id] ? 'fill-current' : ''}`} />
                 <span>{flagged[q.id] ? 'Marcada' : 'Marcar para repasar'}</span>
@@ -172,7 +164,7 @@ export default function QuizScreen({
           {hasAnswered && (
             (() => {
               const fullHint = getFullHint(q);
-              if (!fullHint) return null;
+              const activeHint = hintTranslations[q.id] || translations[q.id]?.hint || fullHint;
               return (
                 <div className="mt-6 p-4 rounded-xl bg-slate-900 border border-indigo-500/20 space-y-1">
                   <div className="font-semibold text-indigo-300 flex items-center gap-1.5 text-sm">
@@ -189,7 +181,7 @@ export default function QuizScreen({
                   </div>
                   <div>
                     <p className={`text-sm leading-relaxed whitespace-pre-line ${(hintTranslations[q.id] || translations[q.id]?.hint) ? 'text-violet-300' : 'text-slate-400'}`}>
-                      {(hintTranslations[q.id] || translations[q.id]?.hint) ? (hintTranslations[q.id] || translations[q.id]?.hint) : fullHint}
+                      {activeHint || <span className="italic opacity-50">No explanation provided. Puedes traducirla para generar una con IA.</span>}
                     </p>
                   </div>
                 </div>
@@ -242,7 +234,7 @@ export default function QuizScreen({
               const isWrong = isAnswered && answers[question.id] !== question.correctKey;
               let btnClass = 'bg-slate-900 border-slate-800 text-slate-400 hover:bg-slate-800';
               if (isCurrent) btnClass = 'bg-indigo-600 border-indigo-400 text-white ring-2 ring-indigo-500/30';
-              else if (isFlagged) btnClass = 'bg-amber-950/60 border-amber-500/60 text-amber-300 font-semibold';
+              else if (isFlagged) btnClass = 'bg-yellow-950/60 border-yellow-500/60 text-yellow-300 font-semibold';
               else if (isWrong) btnClass = 'bg-rose-950/60 border-rose-500/60 text-rose-300 font-semibold';
               else if (isAnswered) btnClass = 'bg-slate-800 border-indigo-500/50 text-indigo-300 font-medium';
 
@@ -252,7 +244,7 @@ export default function QuizScreen({
                 >
                   <span>{idx + 1}</span>
                   {isAnswered && !isCurrent && !isFlagged && <span className="w-1.5 h-1.5 bg-indigo-400 rounded-full absolute bottom-1"></span>}
-                  {isFlagged && !isCurrent && <Bookmark className="h-2 w-2 text-amber-400 fill-current absolute top-0.5 right-0.5" />}
+                  {isFlagged && !isCurrent && <Bookmark className="h-2 w-2 text-yellow-400 fill-current absolute top-0.5 right-0.5" />}
                   {isWrong && !isFlagged && !isCurrent && <span className="w-1.5 h-1.5 bg-rose-400 rounded-full absolute bottom-1"></span>}
                 </button>
               );
@@ -262,7 +254,7 @@ export default function QuizScreen({
           <div className="pt-4 border-t border-slate-800/80 grid grid-cols-2 gap-2 text-xs text-slate-400">
             <div className="flex items-center gap-2"><span className="w-3.5 h-3.5 rounded bg-slate-800 border border-indigo-500/50 block"></span><span>Respondida</span></div>
             <div className="flex items-center gap-2"><span className="w-3.5 h-3.5 rounded bg-slate-900 border border-slate-800 block"></span><span>Sin Responder</span></div>
-            <div className="flex items-center gap-2"><span className="w-3.5 h-3.5 rounded bg-amber-950/60 border border-amber-500/60 block"></span><span>Marcada (Duda)</span></div>
+            <div className="flex items-center gap-2"><span className="w-3.5 h-3.5 rounded bg-yellow-950/60 border border-yellow-500/60 block"></span><span>Marcada (Duda)</span></div>
             <div className="flex items-center gap-2"><span className="w-3.5 h-3.5 rounded bg-rose-950/60 border border-rose-500/60 block"></span><span>Incorrecta</span></div>
             <div className="flex items-center gap-2"><span className="w-3.5 h-3.5 rounded bg-indigo-600 border border-indigo-400 block"></span><span>Actual</span></div>
           </div>

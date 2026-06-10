@@ -113,7 +113,7 @@ export const parseTextToQuestionsContext2 = (text: string): Question[] => {
   if (!cleanText) return [];
 
   const blocks: string[] = [];
-  cleanText.split(/(?:^|\n)(?=Question\s+\d+\s+of\s+\d+)/i).forEach(b => {
+  cleanText.split(/(?:^|\n)(?=Question\s+\d+\s+(?:of|de)\s+\d+)/i).forEach(b => {
     if (b.trim()) blocks.push(b.trim());
   });
 
@@ -131,16 +131,25 @@ export const parseTextToQuestionsContext2 = (text: string): Question[] => {
 
     let title = `Question ${idx + 1}`;
     let linePointer = 0;
+    let firstSubjectLine = '';
 
-    if (/^Question\s+\d+\s+of\s+\d+/i.test(lines[0])) {
-      title = lines[0];
+    const titleMatch = lines[0].match(/^Question\s+\d+\s+(?:of|de)\s+\d+/i);
+    if (titleMatch) {
+      title = titleMatch[0];
+      const restOfLine = lines[0].substring(titleMatch[0].length).trim();
+      if (restOfLine) {
+        firstSubjectLine = restOfLine;
+      }
       linePointer = 1;
     }
 
     const subjectLines: string[] = [];
+    if (firstSubjectLine) {
+      subjectLines.push(firstSubjectLine);
+    }
     while (linePointer < lines.length) {
       const line = lines[linePointer];
-      if (/^Select an answer/i.test(line)) { linePointer++; break; }
+      if (/^(?:Select an answer|Selecciona una respuesta)/i.test(line)) { linePointer++; break; }
       subjectLines.push(line);
       linePointer++;
     }
@@ -151,8 +160,8 @@ export const parseTextToQuestionsContext2 = (text: string): Question[] => {
 
     while (linePointer < lines.length) {
       const line = lines[linePointer];
-      const isCorrect = /\(the correct answer\)/i.test(line);
-      const text = line.replace(/\s*\(the correct answer\)\s*/i, '').trim();
+      const isCorrect = /\((?:the correct answer|la respuesta correcta)\)/i.test(line);
+      const text = line.replace(/\s*\((?:the correct answer|la respuesta correcta)\)\s*/i, '').trim();
       const key = keys[options.length];
       options.push({ key, text });
       if (isCorrect) correctKey = key;

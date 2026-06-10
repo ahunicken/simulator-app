@@ -135,7 +135,7 @@ export default function ResultsScreen({
                     <div className="flex items-center gap-2">
                       <span className="font-mono text-xs font-bold text-slate-400 bg-slate-900 border border-slate-800 px-2 py-0.5 rounded">{q.title || `Pregunta ${q.id}`}</span>
                       {flagged[q.id] && (
-                        <span className="bg-amber-500/10 text-amber-400 text-[10px] px-2 py-0.5 rounded border border-amber-500/20 flex items-center gap-1 font-bold">
+                        <span className="bg-yellow-500/10 text-yellow-400 text-[10px] px-2 py-0.5 rounded border border-yellow-500/20 flex items-center gap-1 font-bold">
                           <Bookmark className="h-3 w-3 fill-current" /> Marcada
                         </span>
                       )}
